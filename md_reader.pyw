@@ -428,14 +428,27 @@ class MarkdownReader:
         self._edit_text.edit_modified(False)
 
     def undo(self):
+        """Safe undo — prevents Windows empty-stack wipe bug."""
         try:
+            before = self._edit_text.get("1.0", tk.END)
             self._edit_text.edit_undo()
+            after = self._edit_text.get("1.0", tk.END)
+            # Windows bug: edit_undo on empty stack wipes everything
+            if not after.strip() and before.strip():
+                self._edit_text.delete("1.0", tk.END)
+                self._edit_text.insert("1.0", before)
         except tk.TclError:
             pass
 
     def redo(self):
+        """Safe redo — prevents Windows empty-stack wipe bug."""
         try:
+            before = self._edit_text.get("1.0", tk.END)
             self._edit_text.edit_redo()
+            after = self._edit_text.get("1.0", tk.END)
+            if not after.strip() and before.strip():
+                self._edit_text.delete("1.0", tk.END)
+                self._edit_text.insert("1.0", before)
         except tk.TclError:
             pass
 
